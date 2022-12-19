@@ -5,9 +5,12 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import ru.sstu.medtest.entity.results.QuestionAnswer;
+import ru.sstu.medtest.entity.results.TicketAnswer;
 
 import javax.persistence.*;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -25,8 +28,12 @@ public class UserEntity implements UserDetails {
     private Boolean active;
     @ManyToMany(fetch = FetchType.EAGER)
     private Set<Role> roles;
-    @ManyToMany(fetch = FetchType.EAGER)
-    private Set<Result> results;
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.DETACH,CascadeType.MERGE,CascadeType.PERSIST,CascadeType.REFRESH})
+    private Set<TicketAnswer> ticketsAnswers; //тут храним пройденные юзером билеты
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.DETACH,CascadeType.MERGE,CascadeType.PERSIST,CascadeType.REFRESH})
+    private Set<QuestionAnswer> questionsAnswers; //тут храним пройденные юзером вопросы
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.DETACH,CascadeType.MERGE,CascadeType.PERSIST,CascadeType.REFRESH})
+    private List<Theme> themes; //тут храним пройденные юзером темы
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

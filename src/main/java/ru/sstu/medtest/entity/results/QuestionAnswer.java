@@ -1,27 +1,26 @@
-package ru.sstu.medtest.entity;
+package ru.sstu.medtest.entity.results;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import ru.sstu.medtest.entity.Question;
+import ru.sstu.medtest.entity.QuestionStatus;
 
 import javax.persistence.*;
-import java.util.List;
-import java.util.Set;
 
 @Entity
 @Getter
 @Setter
 @ToString
 @EqualsAndHashCode
-public class Question {
+public class QuestionAnswer {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private String text;
     private Boolean favorite;
     @Enumerated(EnumType.STRING)
     private QuestionStatus status;
-    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.DETACH,CascadeType.MERGE,CascadeType.PERSIST,CascadeType.REFRESH})
-    private List<Answer> answers;
+    @ManyToOne
+    private Question relatedQuestion;
 }

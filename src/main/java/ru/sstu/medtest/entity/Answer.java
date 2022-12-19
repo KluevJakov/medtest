@@ -1,5 +1,6 @@
 package ru.sstu.medtest.entity;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -10,6 +11,7 @@ import javax.persistence.*;
 @Getter
 @Setter
 @ToString
+@EqualsAndHashCode
 public class Answer {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

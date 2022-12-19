@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import javax.persistence.*;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -14,14 +15,14 @@ import java.util.Set;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class Question {
+public class Ticket {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private String text;
-    private Boolean favorite;
+    private Date lastPass;
+    private Integer errorCount;
     @Enumerated(EnumType.STRING)
     private QuestionStatus status;
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.DETACH,CascadeType.MERGE,CascadeType.PERSIST,CascadeType.REFRESH})
-    private List<Answer> answers;
+    private Set<Question> questions;
 }

@@ -1,19 +1,19 @@
 package ru.sstu.medtest.entity;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
-import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 @Entity
 @Getter
 @Setter
 @ToString
+@EqualsAndHashCode
 public class Theme {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -21,6 +21,7 @@ public class Theme {
     private String title;
     private Integer estimatedTime;
     private String text;
-    @ManyToMany
-    private Set<Question> questions;
+    private Boolean learned;
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.DETACH,CascadeType.MERGE,CascadeType.PERSIST,CascadeType.REFRESH})
+    private List<Question> questions;
 }
