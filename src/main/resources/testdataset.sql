@@ -1,5 +1,14 @@
+INSERT INTO PUBLIC."ROLE" (ID,DISPLAY_NAME,SYSTEM_NAME) VALUES
+	 (1,'Пользователь','USER'),
+	 (2,'Администратор','ADMIN');
+
 INSERT INTO PUBLIC.USER_ENTITY (ID,ACTIVE,LOGIN,NAME,PASSWORD,PASSWORD_ACCEPT) VALUES
-    (1,true,'user','user','$2a$10$Pk48ZGt1sb5reh9W2o00OuSaraLCAKGetQznXFYfnLz9m6IgzGBwC',NULL);
+	 (1,true,'user','user','$2a$10$Pk48ZGt1sb5reh9W2o00OuSaraLCAKGetQznXFYfnLz9m6IgzGBwC',NULL),
+	 (2,true,'admin','admin','$2a$10$t3ECfnynBCCZU4d7fofcsuVg4OszPntbj29ai/x/ZumfhphwMnHFi',NULL);
+
+INSERT INTO PUBLIC.USER_ENTITY_ROLES (USER_ENTITY_ID,ROLES_ID) VALUES
+    (1,1),
+    (2,2);
 
 INSERT INTO PUBLIC.THEME (ID,ESTIMATED_TIME,LEARNED,TEXT,TITLE) VALUES
     (1,10,false,'с1','Тема 1'),
@@ -87,7 +96,14 @@ INSERT INTO PUBLIC.TICKET_QUESTIONS (TICKET_ID,QUESTIONS_ID) VALUES
 	 (2,9),
 	 (2,10);
 
-
 INSERT INTO PUBLIC.THEME_QUESTIONS (THEME_ID,QUESTIONS_ID) VALUES
     (1,1),
-    (1,2);
+    (1,2),
+    (1,3),
+    (1,4),
+    (1,5),
+    (2,6),
+    (2,7),
+    (2,8),
+    (2,9),
+    (2,10);

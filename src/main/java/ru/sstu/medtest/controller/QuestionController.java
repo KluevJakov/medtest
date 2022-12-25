@@ -1,20 +1,21 @@
 package ru.sstu.medtest.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.StaleStateException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import ru.sstu.medtest.entity.Question;
-import ru.sstu.medtest.entity.QuestionStatus;
-import ru.sstu.medtest.entity.Ticket;
-import ru.sstu.medtest.entity.UserEntity;
+import ru.sstu.medtest.entity.*;
 import ru.sstu.medtest.entity.results.QuestionAnswer;
 import ru.sstu.medtest.entity.results.TicketAnswer;
+import ru.sstu.medtest.repository.ExamRepository;
 import ru.sstu.medtest.repository.QuestionRepository;
+import ru.sstu.medtest.repository.StatRepository;
 import ru.sstu.medtest.repository.UserRepository;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,10 +29,14 @@ public class QuestionController {
     public QuestionRepository questionRepository;
     @Autowired
     public UserRepository userRepository;
+    @Autowired
+    public ExamRepository examRepository;
+    @Autowired
+    public StatRepository statRepository;
 
     /*** Метод, возвращающий юзеру все ошибки */
     @GetMapping("/getErrors")
-    public ResponseEntity<?> getAll() {
+    public ResponseEntity<?> getErrors() {
         UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal(); //текуший юзер
 
         List<QuestionAnswer> userQuestions = user.getQuestionsAnswers() //получаем список пройденных вопросов
@@ -64,7 +69,7 @@ public class QuestionController {
                 .filter(e -> e.getFavorite().equals(true))
                 .collect(Collectors.toList());
 
-        List<Long> favsId = userQuestions.stream().map(e -> e.getRelatedQuestion().getId()).collect(Collectors.toList());
+        List<Long> favsId = userQuestions.stream().filter(QuestionAnswer::getFavorite).map(e -> e.getRelatedQuestion().getId()).collect(Collectors.toList());
 
         List<Question> questions = new ArrayList<>();
         if (userQuestions.size() != 0) {
@@ -85,24 +90,80 @@ public class QuestionController {
 
         List<QuestionAnswer> userQuestions = new ArrayList<>(user.getQuestionsAnswers());
 
-        List<Long> favsId = userQuestions.stream().map(e -> e.getRelatedQuestion().getId()).collect(Collectors.toList());
+        List<Long> favsId = userQuestions.stream().filter(QuestionAnswer::getFavorite).map(e -> e.getRelatedQuestion().getId()).collect(Collectors.toList());
 
-        System.out.println(favsId);
-        List<Question> questions = new ArrayList<>();
-        if (userQuestions.size() != 0) {
-            questions = questionRepository.findAll()
+        List<Question> questions = questionRepository.findAll()
                     .stream()
                     .peek(e -> e.setFavorite(favsId.contains(e.getId())))
                     .collect(Collectors.toList());
-        }
+
         log.info("try to fetch marathon " + questions);
+        Collections.shuffle(questions); //мешаем
         return ResponseEntity.ok().body(questions);
+    }
+
+    /*** Метод, возвращающий юзеру вопросы для экзамена */
+    @GetMapping("/getExam")
+    public ResponseEntity<?> getExam() {
+        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        List<Question> questions = questionRepository.findAll();
+        Collections.shuffle(questions); //мешаем
+        questions = questions.stream().limit(20).collect(Collectors.toList());
+        log.info("try to fetch exam " + questions);
+        return ResponseEntity.ok().body(questions);
+    }
+
+    @PostMapping("/runExam")
+    public ResponseEntity<?> runExam() {
+        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (examRepository.findByUserAttempt(user).isPresent()){
+            log.info("Exam session is expired");
+            return ResponseEntity.badRequest().body("Session expired");
+        }
+        try {
+            Runnable runnable = () -> {
+
+                    Exam exam = new Exam();
+                    exam.setUserAttempt(user);
+                    log.info("Create exam session : " + exam);
+                    exam = examRepository.save(exam);
+                try {
+                    Thread.sleep(1000 * 10); // * 20
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                log.info("Delete exam session : " + exam);
+                    examRepository.delete(exam);
+
+            };
+
+            runnable.run();
+        } catch (Exception e) {
+            log.error("Something went wrong");
+        }
+
+        log.info("Exam session successfully closed");
+        return ResponseEntity.ok().body("");
     }
 
     /*** Метод, принимающий ответ на билет */
     @PostMapping("/answer")
     public ResponseEntity<?> answer(@RequestBody List<Question> questions) {
         UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (examRepository.findByUserAttempt(user).isPresent()){
+            log.info("Exam session is early expired");
+            examRepository.delete(examRepository.findByUserAttempt(user).get());
+
+            Stat stat = new Stat();
+            stat.setName(user.getName());
+            stat.setLastPass(new Date());
+            stat.setErrorCount((int)questions.stream().filter(e -> e.getStatus() == QuestionStatus.FALSE).count());
+            stat = statRepository.save(stat);
+            log.info("Stat was saved: " + stat);
+        }
 
         for (Question t : questions) {
             QuestionAnswer questionAnswer = new QuestionAnswer();

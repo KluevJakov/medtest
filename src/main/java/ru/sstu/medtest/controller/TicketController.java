@@ -11,6 +11,8 @@ import ru.sstu.medtest.entity.Ticket;
 import ru.sstu.medtest.entity.UserEntity;
 import ru.sstu.medtest.entity.results.QuestionAnswer;
 import ru.sstu.medtest.entity.results.TicketAnswer;
+import ru.sstu.medtest.repository.QuestionAnswerRepository;
+import ru.sstu.medtest.repository.TicketAnswerRepository;
 import ru.sstu.medtest.repository.TicketRepository;
 import ru.sstu.medtest.repository.UserRepository;
 
@@ -26,6 +28,10 @@ public class TicketController {
     public TicketRepository ticketRepository;
     @Autowired
     public UserRepository userRepository;
+    @Autowired
+    public TicketAnswerRepository ticketAnswerRepository;
+    @Autowired
+    public QuestionAnswerRepository questionAnswerRepository;
 
     /*** Метод формирующий для пользователя список изученных и неизученных тем | D: */
     @GetMapping("/getAll")
@@ -81,8 +87,9 @@ public class TicketController {
         }
         ticketAnswer.setLastPass(new Date()); //выставялем дату последнего выполнения (текущую)
 
-        user.getTicketsAnswers().removeIf(e -> e.getRelatedTicket().getId().equals(ticketAnswer.getRelatedTicket().getId()));
+        log.info("" + user.getTicketsAnswers().removeIf(e -> e.getRelatedTicket().getId().equals(ticketAnswer.getRelatedTicket().getId())));
         user.getTicketsAnswers().add(ticketAnswer); //заменяем билет, если он уже был когда-то пройден
+        log.info(user.getTicketsAnswers().toString());
 
         for (Question t : ticket.getQuestions()) { // пробегаемся по отвеченным вопросам
             QuestionAnswer questionAnswer = new QuestionAnswer(); //создаем модель отвеченного вопроса

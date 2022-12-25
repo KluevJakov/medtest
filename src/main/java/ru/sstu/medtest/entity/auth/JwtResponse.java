@@ -3,6 +3,7 @@ package ru.sstu.medtest.entity.auth;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
+import ru.sstu.medtest.entity.Role;
 
 @Getter
 @AllArgsConstructor
@@ -10,6 +11,6 @@ import lombok.ToString;
 public class JwtResponse {
     private String token;
     private String login;
-    private String role;
+    private Role role;
     private Long id;
 }
