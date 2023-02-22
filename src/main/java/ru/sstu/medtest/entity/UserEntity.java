@@ -18,7 +18,7 @@ import java.util.Set;
 @Setter
 public class UserEntity implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
     private String login;
     private String name;

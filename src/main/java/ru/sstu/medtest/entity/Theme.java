@@ -20,6 +20,7 @@ public class Theme {
     private Long id;
     private String title;
     private Integer estimatedTime;
+    @Column(length = 4096)
     private String text;
     private Boolean learned;
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.DETACH,CascadeType.MERGE,CascadeType.PERSIST,CascadeType.REFRESH})
