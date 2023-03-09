@@ -7,10 +7,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.util.comparator.Comparators;
 import org.springframework.web.bind.annotation.*;
 import ru.sstu.medtest.config.jwt.JwtTokenUtil;
-import ru.sstu.medtest.entity.Role;
 import ru.sstu.medtest.entity.Stat;
 import ru.sstu.medtest.entity.UserEntity;
 import ru.sstu.medtest.entity.auth.JwtRequest;
@@ -21,7 +19,6 @@ import ru.sstu.medtest.repository.UserRepository;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -52,48 +49,60 @@ public class MainController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody JwtRequest user) {
-        System.out.println(user);
-        Optional<UserEntity> userAttempt = userRepository.findByLogin(user.getLogin());
-        if (userAttempt.isEmpty()) {
+        try {
+            Optional<UserEntity> userAttempt = userRepository.findByLogin(user.getLogin());
+            if (userAttempt.isEmpty()) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Ошибка! Пользователь не найден");
+            } else if (!encoder.matches(user.getPassword(), userAttempt.get().getPassword())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Ошибка! Неверный пароль");
+            }
+
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword()));
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtUtils.generateJwtToken(authentication);
+
+            return ResponseEntity.ok().body(new JwtResponse(jwt, userAttempt.get().getLogin(), userAttempt.get().getRoles().stream().findFirst().get(), userAttempt.get().getId()));
+        } catch (Exception e) {
             return ResponseEntity
                     .badRequest()
-                    .body("Ошибка! Пользователь не найден");
-        } else if (!encoder.matches(user.getPassword(), userAttempt.get().getPassword())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("Ошибка! Неверный пароль");
+                    .body("Что-то пошло не так! Обратитесь к администратору");
         }
-
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword()));
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
-        System.out.println("generateJwtToken " + jwt);
-        System.out.println("JwtResponse " + new JwtResponse(jwt, userAttempt.get().getLogin(), userAttempt.get().getRoles().stream().findFirst().get(), userAttempt.get().getId()));
-        return ResponseEntity.ok(new JwtResponse(jwt, userAttempt.get().getLogin(), userAttempt.get().getRoles().stream().findFirst().get(), userAttempt.get().getId()));
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserEntity user) {
+        try {
+            if (userRepository.findByLogin(user.getLogin()).isPresent()) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Ошибка! Данный логин уже используется");
+            }
 
-        System.out.println(user);
-        if (userRepository.findByLogin(user.getLogin()).isPresent()) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("Ошибка! Данный логин уже используется");
+            if (!user.getPassword().equals(user.getPasswordAccept())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Ошибка! Пароли не совпадают");
+            }
+
+            System.out.println(userRepository.count());
+            user.setId(userRepository.count()+1);
+            user.setPassword(encoder.encode(user.getPassword()));
+            user.setPasswordAccept(null);
+            user.setRoles(Collections.singleton(roleRepository.findBySystemName("USER")));
+            user.setActive(true);
+
+            System.out.println(user);
+            var instance = userRepository.save(user);
+            System.out.println(instance);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body("Произошла ошибка при регистрации! Обратитесь к администратору");
         }
-
-        if (!user.getPassword().equals(user.getPasswordAccept())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("Ошибка! Пароли не совпадают");
-        }
-
-        user.setPassword(encoder.encode(user.getPassword()));
-        user.setPasswordAccept(null);
-        user.setRoles(Collections.singleton(roleRepository.findBySystemName("USER")));
-        user.setActive(true);
-        userRepository.save(user);
 
         return ResponseEntity.ok("");
     }

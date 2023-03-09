@@ -2,7 +2,6 @@ package ru.sstu.medtest.entity;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import ru.sstu.medtest.entity.results.QuestionAnswer;
@@ -18,7 +17,6 @@ import java.util.Set;
 @Setter
 public class UserEntity implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
     private String login;
     private String name;

@@ -1,14 +1,12 @@
 package ru.sstu.medtest.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.StaleStateException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ru.sstu.medtest.entity.*;
 import ru.sstu.medtest.entity.results.QuestionAnswer;
-import ru.sstu.medtest.entity.results.TicketAnswer;
 import ru.sstu.medtest.repository.ExamRepository;
 import ru.sstu.medtest.repository.QuestionRepository;
 import ru.sstu.medtest.repository.StatRepository;
@@ -55,7 +53,7 @@ public class QuestionController {
                     .peek(e -> e.setFavorite(favsId.contains(e.getId()))) //но выставяем им маркеры избранности
                     .collect(Collectors.toList());
         }
-        log.info("try to fetch errors " + questions);
+        //log.info("try to fetch errors " + questions);
         return ResponseEntity.ok().body(questions);
     }
 
@@ -79,7 +77,7 @@ public class QuestionController {
                     .peek(e -> e.setFavorite(favsId.contains(e.getId())))
                     .collect(Collectors.toList());
         }
-        log.info("try to fetch favs " + questions);
+        //log.info("try to fetch favs " + questions);
         return ResponseEntity.ok().body(questions);
     }
 
@@ -97,7 +95,7 @@ public class QuestionController {
                     .peek(e -> e.setFavorite(favsId.contains(e.getId())))
                     .collect(Collectors.toList());
 
-        log.info("try to fetch marathon " + questions);
+        //log.info("try to fetch marathon " + questions);
         Collections.shuffle(questions); //мешаем
         return ResponseEntity.ok().body(questions);
     }
@@ -110,7 +108,7 @@ public class QuestionController {
         List<Question> questions = questionRepository.findAll();
         Collections.shuffle(questions); //мешаем
         questions = questions.stream().limit(20).collect(Collectors.toList());
-        log.info("try to fetch exam " + questions);
+        //log.info("try to fetch exam " + questions);
         return ResponseEntity.ok().body(questions);
     }
 
@@ -119,7 +117,7 @@ public class QuestionController {
         UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (examRepository.findByUserAttempt(user).isPresent()){
-            log.info("Exam session is expired");
+            //log.info("Exam session is expired");
             return ResponseEntity.badRequest().body("Session expired");
         }
         try {
@@ -127,24 +125,24 @@ public class QuestionController {
 
                     Exam exam = new Exam();
                     exam.setUserAttempt(user);
-                    log.info("Create exam session : " + exam);
+                    //log.info("Create exam session : " + exam);
                     exam = examRepository.save(exam);
                 try {
                     Thread.sleep(1000 * 10); // * 20
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                log.info("Delete exam session : " + exam);
+                //log.info("Delete exam session : " + exam);
                     examRepository.delete(exam);
 
             };
 
             runnable.run();
         } catch (Exception e) {
-            log.error("Something went wrong");
+            //log.error("Something went wrong");
         }
 
-        log.info("Exam session successfully closed");
+        //log.info("Exam session successfully closed");
         return ResponseEntity.ok().body("");
     }
 
@@ -154,7 +152,7 @@ public class QuestionController {
         UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (examRepository.findByUserAttempt(user).isPresent()){
-            log.info("Exam session is early expired");
+            //log.info("Exam session is early expired");
             examRepository.delete(examRepository.findByUserAttempt(user).get());
 
             Stat stat = new Stat();
@@ -162,7 +160,7 @@ public class QuestionController {
             stat.setLastPass(new Date());
             stat.setErrorCount((int)questions.stream().filter(e -> e.getStatus() == QuestionStatus.FALSE).count());
             stat = statRepository.save(stat);
-            log.info("Stat was saved: " + stat);
+            //log.info("Stat was saved: " + stat);
         }
 
         for (Question t : questions) {
@@ -175,7 +173,7 @@ public class QuestionController {
         }
 
         userRepository.save(user);
-        log.info(user.getLogin() + " answered in marathon, errors or favs");
+        //log.info(user.getLogin() + " answered in marathon, errors or favs");
         return ResponseEntity.ok().body("");
     }
 }

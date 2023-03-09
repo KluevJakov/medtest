@@ -30,7 +30,7 @@ public class ThemeController {
         List<Theme> themes = themeRepository.findAll().stream()
                 .peek(e -> e.setLearned(user.getThemes().stream().anyMatch(x -> x.getId().equals(e.getId()))))
                 .collect(Collectors.toList());
-        log.info(themes.toString());
+        //log.info(themes.toString());
         return ResponseEntity.ok().body(themes);
     }
 
@@ -42,9 +42,9 @@ public class ThemeController {
         if (user.getThemes().stream().noneMatch(x -> x.getId().equals(theme.getId()))) {
             user.getThemes().add(theme);
             userRepository.save(user);
-            log.info(user.getLogin() + " learned " + theme.getTitle());
+            //log.info(user.getLogin() + " learned " + theme.getTitle());
         } else {
-            log.info(user.getLogin() + " already learned this " + theme.getTitle());
+            //log.info(user.getLogin() + " already learned this " + theme.getTitle());
         }
         return ResponseEntity.ok().body("");
     }
@@ -57,9 +57,9 @@ public class ThemeController {
         if (user.getThemes().stream().anyMatch(x -> x.getId().equals(theme.getId()))) {
             user.setThemes(user.getThemes().stream().filter(e -> !e.getId().equals(theme.getId())).collect(Collectors.toList()));
             userRepository.save(user);
-            log.info(user.getLogin() + " unlearned " + theme.getTitle());
+            //log.info(user.getLogin() + " unlearned " + theme.getTitle());
         } else {
-            log.info(user.getLogin() + " already unlearned this " + theme.getTitle());
+            //log.info(user.getLogin() + " already unlearned this " + theme.getTitle());
         }
         return ResponseEntity.ok().body("");
     }
