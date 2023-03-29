@@ -4,8 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import javax.persistence.*;
-import java.util.Date;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
 @Entity
 @Getter
@@ -17,5 +19,5 @@ public class Stat {
     private Long id;
     private String name;
     private Integer errorCount;
-    private Date lastPass;
+    private Long lastPass;
 }

@@ -12,10 +12,12 @@ import ru.sstu.medtest.repository.QuestionRepository;
 import ru.sstu.medtest.repository.StatRepository;
 import ru.sstu.medtest.repository.UserRepository;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -91,9 +93,9 @@ public class QuestionController {
         List<Long> favsId = userQuestions.stream().filter(QuestionAnswer::getFavorite).map(e -> e.getRelatedQuestion().getId()).collect(Collectors.toList());
 
         List<Question> questions = questionRepository.findAll()
-                    .stream()
-                    .peek(e -> e.setFavorite(favsId.contains(e.getId())))
-                    .collect(Collectors.toList());
+                .stream()
+                .peek(e -> e.setFavorite(favsId.contains(e.getId())))
+                .collect(Collectors.toList());
 
         //log.info("try to fetch marathon " + questions);
         Collections.shuffle(questions); //мешаем
@@ -116,27 +118,25 @@ public class QuestionController {
     public ResponseEntity<?> runExam() {
         UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        if (examRepository.findByUserAttempt(user).isPresent()){
+        if (examRepository.findByUserAttempt(user).isPresent()) {
             //log.info("Exam session is expired");
             return ResponseEntity.badRequest().body("Session expired");
         }
         try {
             Runnable runnable = () -> {
-
-                    Exam exam = new Exam();
-                    exam.setUserAttempt(user);
-                    //log.info("Create exam session : " + exam);
-                    exam = examRepository.save(exam);
+                Exam exam = new Exam();
+                exam.setDate(LocalDateTime.now());
+                exam.setUserAttempt(user);
+                //log.info("Create exam session : " + exam);
+                exam = examRepository.save(exam);
                 try {
                     Thread.sleep(1000 * 10); // * 20
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
                 //log.info("Delete exam session : " + exam);
-                    examRepository.delete(exam);
-
+                examRepository.delete(exam);
             };
-
             runnable.run();
         } catch (Exception e) {
             //log.error("Something went wrong");
@@ -150,15 +150,16 @@ public class QuestionController {
     @PostMapping("/answer")
     public ResponseEntity<?> answer(@RequestBody List<Question> questions) {
         UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        if (examRepository.findByUserAttempt(user).isPresent()){
-            //log.info("Exam session is early expired");
-            examRepository.delete(examRepository.findByUserAttempt(user).get());
-
+        //System.out.println(new Date() + " " + startTime);
+        Optional<Exam> exam = examRepository.findByUserAttempt(user);
+        if (exam.isPresent()) {
             Stat stat = new Stat();
             stat.setName(user.getName());
-            stat.setLastPass(new Date());
-            stat.setErrorCount((int)questions.stream().filter(e -> e.getStatus() == QuestionStatus.FALSE).count());
+            stat.setLastPass(ChronoUnit.SECONDS.between(exam.get().getDate(), LocalDateTime.now()));
+
+            examRepository.delete(examRepository.findByUserAttempt(user).get());
+
+            stat.setErrorCount((int) questions.stream().filter(e -> e.getStatus() == QuestionStatus.FALSE).count());
             stat = statRepository.save(stat);
             //log.info("Stat was saved: " + stat);
         }
