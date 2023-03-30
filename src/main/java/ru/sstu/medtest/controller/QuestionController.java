@@ -4,20 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import ru.sstu.medtest.entity.*;
 import ru.sstu.medtest.entity.results.QuestionAnswer;
-import ru.sstu.medtest.repository.ExamRepository;
-import ru.sstu.medtest.repository.QuestionRepository;
-import ru.sstu.medtest.repository.StatRepository;
-import ru.sstu.medtest.repository.UserRepository;
+import ru.sstu.medtest.repository.*;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -33,6 +28,12 @@ public class QuestionController {
     public ExamRepository examRepository;
     @Autowired
     public StatRepository statRepository;
+    @Autowired
+    private ThemeRepository themeRepository;
+    @Autowired
+    private TicketRepository ticketRepository;
+    @Autowired
+    public QuestionAnswerRepository questionAnswerRepository;
 
     /*** Метод, возвращающий юзеру все ошибки */
     @GetMapping("/getErrors")
@@ -119,7 +120,6 @@ public class QuestionController {
         UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (examRepository.findByUserAttempt(user).isPresent()) {
-            //log.info("Exam session is expired");
             return ResponseEntity.badRequest().body("Session expired");
         }
         try {
@@ -127,22 +127,18 @@ public class QuestionController {
                 Exam exam = new Exam();
                 exam.setDate(LocalDateTime.now());
                 exam.setUserAttempt(user);
-                //log.info("Create exam session : " + exam);
                 exam = examRepository.save(exam);
                 try {
-                    Thread.sleep(1000 * 10); // * 20
+                    Thread.sleep(1000 * 25); // * 20
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                //log.info("Delete exam session : " + exam);
                 examRepository.delete(exam);
             };
             runnable.run();
         } catch (Exception e) {
-            //log.error("Something went wrong");
         }
 
-        //log.info("Exam session successfully closed");
         return ResponseEntity.ok().body("");
     }
 
@@ -150,18 +146,14 @@ public class QuestionController {
     @PostMapping("/answer")
     public ResponseEntity<?> answer(@RequestBody List<Question> questions) {
         UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        //System.out.println(new Date() + " " + startTime);
         Optional<Exam> exam = examRepository.findByUserAttempt(user);
         if (exam.isPresent()) {
             Stat stat = new Stat();
             stat.setName(user.getName());
             stat.setLastPass(ChronoUnit.SECONDS.between(exam.get().getDate(), LocalDateTime.now()));
-
             examRepository.delete(examRepository.findByUserAttempt(user).get());
-
             stat.setErrorCount((int) questions.stream().filter(e -> e.getStatus() == QuestionStatus.FALSE).count());
             stat = statRepository.save(stat);
-            //log.info("Stat was saved: " + stat);
         }
 
         for (Question t : questions) {
@@ -175,6 +167,41 @@ public class QuestionController {
 
         userRepository.save(user);
         //log.info(user.getLogin() + " answered in marathon, errors or favs");
+        return ResponseEntity.ok().body("");
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<?> create(@RequestBody Question question) {
+        Long relatedTicketId = question.getId();
+
+        question.setStatus(QuestionStatus.NOTANSWERED);
+        question.setFavorite(false);
+        question.setId(null);
+        Question ready = questionRepository.save(question);
+
+        Ticket ticket = ticketRepository.getById(relatedTicketId);
+
+        if (ticket.getQuestions() == null) {
+            ticket.setQuestions(new HashSet<>());
+        }
+
+        ticket.getQuestions().add(ready);
+
+        ticketRepository.save(ticket);
+
+        return ResponseEntity.ok().body(ready);
+    }
+
+    @Transactional
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        Question question = questionRepository.getById(id);
+        questionAnswerRepository.removeLinks1(id);
+        questionAnswerRepository.removeLinks2(id);
+        question.getAnswers().stream().forEach(e -> questionAnswerRepository.removeLinks(e.getId()));
+        questionRepository.removeLinks(id);
+        themeRepository.removeLinks(id);
+        questionRepository.deleteById(id);
         return ResponseEntity.ok().body("");
     }
 }

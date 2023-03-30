@@ -21,6 +21,6 @@ public class QuestionAnswer {
     private Boolean favorite;
     @Enumerated(EnumType.STRING)
     private QuestionStatus status;
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.DETACH, CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.PERSIST})
     private Question relatedQuestion;
 }

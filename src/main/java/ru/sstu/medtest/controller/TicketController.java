@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import ru.sstu.medtest.entity.Question;
 import ru.sstu.medtest.entity.QuestionStatus;
@@ -11,10 +12,7 @@ import ru.sstu.medtest.entity.Ticket;
 import ru.sstu.medtest.entity.UserEntity;
 import ru.sstu.medtest.entity.results.QuestionAnswer;
 import ru.sstu.medtest.entity.results.TicketAnswer;
-import ru.sstu.medtest.repository.QuestionAnswerRepository;
-import ru.sstu.medtest.repository.TicketAnswerRepository;
-import ru.sstu.medtest.repository.TicketRepository;
-import ru.sstu.medtest.repository.UserRepository;
+import ru.sstu.medtest.repository.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,6 +24,8 @@ import java.util.stream.Collectors;
 public class TicketController {
     @Autowired
     public TicketRepository ticketRepository;
+    @Autowired
+    private ThemeRepository themeRepository;
     @Autowired
     public UserRepository userRepository;
     @Autowired
@@ -102,6 +102,33 @@ public class TicketController {
 
         userRepository.save(user); //все обработанное выше сохраняем в бд
         log.info(user.getLogin() + " answered " + user.getTicketsAnswers());
+        return ResponseEntity.ok().body("");
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<?> create() {
+        Ticket ticket = new Ticket();
+        ticket.setStatus(QuestionStatus.NOTANSWERED);
+        Ticket ready = ticketRepository.save(ticket);
+        return ResponseEntity.ok().body("");
+    }
+
+    @Transactional
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        Ticket ticket = ticketRepository.getById(id);
+        ticket.getQuestions().stream()
+                .forEach(e -> e.getAnswers().stream()
+                        .forEach(j -> questionAnswerRepository.removeLinks(j.getId())));
+        ticket.getQuestions().stream()
+                .forEach(e -> themeRepository.removeLinks(e.getId()));
+        ticket.getQuestions().stream()
+                .forEach(e -> questionAnswerRepository.removeLinks1(e.getId()));
+        ticket.getQuestions().stream()
+                .forEach(e -> questionAnswerRepository.removeLinks2(e.getId()));
+        ticketAnswerRepository.removeLinks(id);
+        ticketRepository.removeLinks(id);
+        ticketRepository.deleteById(id);
         return ResponseEntity.ok().body("");
     }
 }

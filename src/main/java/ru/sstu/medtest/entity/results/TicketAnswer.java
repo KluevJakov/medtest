@@ -23,6 +23,6 @@ public class TicketAnswer {
     private Integer errorCount;
     @Enumerated(EnumType.STRING)
     private QuestionStatus status;
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.DETACH, CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.PERSIST})
     private Ticket relatedTicket;
 }

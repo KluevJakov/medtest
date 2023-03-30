@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: #jdbc:h2:file:/your_path_to/db
+    url: jdbc:h2:file:/home/loony/IdeaProjects/medtest/src/main/resources/medtest
     driverClassName: org.h2.Driver
     username: sa
     password:

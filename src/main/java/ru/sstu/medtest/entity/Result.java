@@ -16,6 +16,6 @@ public class Result {
     private Long id;
     @Enumerated(EnumType.STRING)
     private QuestionStatus status;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     private Question question;
 }

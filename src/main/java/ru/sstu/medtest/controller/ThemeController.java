@@ -5,11 +5,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import ru.sstu.medtest.entity.Answer;
+import ru.sstu.medtest.entity.Question;
 import ru.sstu.medtest.entity.Theme;
 import ru.sstu.medtest.entity.UserEntity;
+import ru.sstu.medtest.repository.QuestionRepository;
 import ru.sstu.medtest.repository.ThemeRepository;
 import ru.sstu.medtest.repository.UserRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,6 +26,8 @@ public class ThemeController {
     public ThemeRepository themeRepository;
     @Autowired
     public UserRepository userRepository;
+    @Autowired
+    private QuestionRepository questionRepository;
 
     /*** Метод формирующий для пользователя список изученных и неизученных тем */
     @GetMapping("/getAll")
@@ -61,6 +67,27 @@ public class ThemeController {
         } else {
             //log.info(user.getLogin() + " already unlearned this " + theme.getTitle());
         }
+        return ResponseEntity.ok().body("");
+    }
+
+    @PostMapping("/link")
+    public ResponseEntity<?> create(@RequestBody Question question) {
+        Long relatedThemeId = question.getId();
+        Long relatedQuestionId = Long.parseLong(question.getText());
+
+        System.out.println(relatedThemeId + " " + relatedQuestionId);
+
+        Question q = questionRepository.getById(relatedQuestionId);
+        Theme ready = themeRepository.getById(relatedThemeId);
+
+        if (ready.getQuestions() == null) {
+            ready.setQuestions(new ArrayList<>());
+        }
+
+        ready.getQuestions().add(q);
+
+        themeRepository.save(ready);
+
         return ResponseEntity.ok().body("");
     }
 }
