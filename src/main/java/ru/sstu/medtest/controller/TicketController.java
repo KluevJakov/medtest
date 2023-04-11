@@ -67,7 +67,7 @@ public class TicketController {
                     return e;
                 })
                 .collect(Collectors.toList());
-        log.info(tickets.toString());
+        //log.info(tickets.toString());
         return ResponseEntity.ok().body(tickets);
     }
 
@@ -87,9 +87,9 @@ public class TicketController {
         }
         ticketAnswer.setLastPass(new Date()); //выставялем дату последнего выполнения (текущую)
 
-        log.info("" + user.getTicketsAnswers().removeIf(e -> e.getRelatedTicket().getId().equals(ticketAnswer.getRelatedTicket().getId())));
+        //log.info("" + user.getTicketsAnswers().removeIf(e -> e.getRelatedTicket().getId().equals(ticketAnswer.getRelatedTicket().getId())));
         user.getTicketsAnswers().add(ticketAnswer); //заменяем билет, если он уже был когда-то пройден
-        log.info(user.getTicketsAnswers().toString());
+        //log.info(user.getTicketsAnswers().toString());
 
         for (Question t : ticket.getQuestions()) { // пробегаемся по отвеченным вопросам
             QuestionAnswer questionAnswer = new QuestionAnswer(); //создаем модель отвеченного вопроса
@@ -101,7 +101,7 @@ public class TicketController {
         }
 
         userRepository.save(user); //все обработанное выше сохраняем в бд
-        log.info(user.getLogin() + " answered " + user.getTicketsAnswers());
+        //log.info(user.getLogin() + " answered " + user.getTicketsAnswers());
         return ResponseEntity.ok().body("");
     }
 

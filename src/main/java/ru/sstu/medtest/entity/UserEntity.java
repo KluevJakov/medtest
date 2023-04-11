@@ -19,7 +19,7 @@ public class UserEntity implements UserDetails {
     @Id
     private Long id;
     private String login;
-    private String name;
+    private String groupp;
     private String password;
     private String passwordAccept;
     private Boolean active;
@@ -60,14 +60,5 @@ public class UserEntity implements UserDetails {
     @Override
     public boolean isEnabled() {
         return active;
-    }
-
-    @Override
-    public String toString() {
-        return "UserEntity{" +
-                "id=" + id +
-                ", login='" + login + '\'' +
-                ", name='" + name + '\'' +
-                '}';
     }
 }

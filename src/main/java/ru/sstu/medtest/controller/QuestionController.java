@@ -149,8 +149,10 @@ public class QuestionController {
         Optional<Exam> exam = examRepository.findByUserAttempt(user);
         if (exam.isPresent()) {
             Stat stat = new Stat();
-            stat.setName(user.getName());
+            stat.setName(user.getLogin());
+            stat.setGroupp(user.getGroupp());
             stat.setLastPass(ChronoUnit.SECONDS.between(exam.get().getDate(), LocalDateTime.now()));
+            stat.setPassDate(new Date());
             examRepository.delete(examRepository.findByUserAttempt(user).get());
             stat.setErrorCount((int) questions.stream().filter(e -> e.getStatus() == QuestionStatus.FALSE).count());
             stat = statRepository.save(stat);
