@@ -162,7 +162,7 @@ public class MainController {
         Integer score = 0;
 
         TestAnswersDto check = TestAnswersDto.builder()
-                .q1("a").q2("6").q3("9").q4("7").q5("1").q6("б").q7("в").q8("2")
+                .q1("а").q2("6").q3("9").q4("7").q5("1").q6("б").q7("в").q8("2")
                 .q9("5").q10("3").q11("8").q12("4")
                 .build();
 
@@ -203,6 +203,6 @@ public class MainController {
             score += 1;
         }
 
-        return ResponseEntity.ok("Правильных ответов "+score+"/12");
+        return ResponseEntity.ok("{ \"text\" : \"Правильных ответов "+score+"/12\"}");
     }
 }
