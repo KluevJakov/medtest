@@ -1,15 +1,12 @@
 package ru.sstu.medtest.config.jwt;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import ru.sstu.medtest.entity.UserEntity;
 
 import java.util.Date;
-
-import io.jsonwebtoken.*;
-import ru.sstu.medtest.entity.UserEntity;
 
 @Component
 public class JwtTokenUtil {

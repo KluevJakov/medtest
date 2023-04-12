@@ -136,7 +136,7 @@ public class QuestionController {
                 examRepository.delete(exam);
             };
             runnable.run();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
 
         return ResponseEntity.ok().body("");
@@ -200,7 +200,7 @@ public class QuestionController {
         Question question = questionRepository.getById(id);
         questionAnswerRepository.removeLinks1(id);
         questionAnswerRepository.removeLinks2(id);
-        question.getAnswers().stream().forEach(e -> questionAnswerRepository.removeLinks(e.getId()));
+        question.getAnswers().forEach(e -> questionAnswerRepository.removeLinks(e.getId()));
         questionRepository.removeLinks(id);
         themeRepository.removeLinks(id);
         questionRepository.deleteById(id);

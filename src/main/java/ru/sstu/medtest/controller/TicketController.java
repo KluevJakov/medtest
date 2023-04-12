@@ -14,7 +14,10 @@ import ru.sstu.medtest.entity.results.QuestionAnswer;
 import ru.sstu.medtest.entity.results.TicketAnswer;
 import ru.sstu.medtest.repository.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -36,72 +39,64 @@ public class TicketController {
     /*** Метод формирующий для пользователя список изученных и неизученных тем | D: */
     @GetMapping("/getAll")
     public ResponseEntity<?> getAll() {
-        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal(); //получаем текущего юзера
+        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        List<TicketAnswer> userTickets = new ArrayList<>(user.getTicketsAnswers()); //получаем все пройденные билеты юзера
-        List<QuestionAnswer> userQuestions = new ArrayList<>(user.getQuestionsAnswers()); //получаем все пройденные (и правильные и неправильные) вопросы юзера
+        List<TicketAnswer> userTickets = new ArrayList<>(user.getTicketsAnswers());
+        List<QuestionAnswer> userQuestions = new ArrayList<>(user.getQuestionsAnswers());
 
-        List<Ticket> tickets = ticketRepository.findAll().stream() //формируем билеты на выдачу
-                .map(e -> {
-                    if (userTickets.stream().anyMatch(x -> x.getRelatedTicket().getId().equals(e.getId()))) { //если билет был когда-то пройден
-                        TicketAnswer current = userTickets.stream().filter(x -> x.getRelatedTicket().getId().equals(e.getId())).findFirst().get(); //находим этот пройденный билет
-                        e.setStatus(current.getStatus()); //выставляем статус TRUE или FALSE
-                        e.setLastPass(current.getLastPass()); //выставляем дату последнего прохождения
-                        e.setErrorCount(current.getErrorCount()); //выставляем кол-во ошибок последнего прохождения
+        List<Ticket> tickets = ticketRepository.findAll().stream()
+                .peek(e -> {
+                    if (userTickets.stream().anyMatch(x -> x.getRelatedTicket().getId().equals(e.getId()))) {
+                        TicketAnswer current = userTickets.stream().filter(x -> x.getRelatedTicket().getId().equals(e.getId())).findFirst().get();
+                        e.setStatus(current.getStatus());
+                        e.setLastPass(current.getLastPass());
+                        e.setErrorCount(current.getErrorCount());
 
-                        Set<Question> questions = e.getQuestions() //формируем инфу о пройденных вопросов, (на самом деле нас интересуют только поле favorite)
-                                .stream().map(x -> {
-                                    x.setFavorite(userQuestions.stream() //выставляем маркер избранного вопроса, если найден в пройденных
-                                            .anyMatch(z -> z.getRelatedQuestion().getId().equals(x.getId())) ? userQuestions.stream()
-                                            .filter(z -> z.getRelatedQuestion().getId().equals(x.getId()))
-                                            .findFirst().get()
-                                            .getFavorite() : false);
-                                    return x;
-                                })
+                        Set<Question> questions = e.getQuestions()
+                                .stream().peek(x -> x.setFavorite(userQuestions.stream()
+                                        .anyMatch(z -> z.getRelatedQuestion().getId().equals(x.getId())) ? userQuestions.stream()
+                                        .filter(z -> z.getRelatedQuestion().getId().equals(x.getId()))
+                                        .findFirst().get()
+                                        .getFavorite() : false))
                                 .collect(Collectors.toSet());
 
-                        e.setQuestions(questions); //выставляем отредаченые вопросы
+                        e.setQuestions(questions);
                     } else {
-                        e.setStatus(QuestionStatus.NOTANSWERED); //если билет никогда не был пройден, выставляем статус NOTANSWERED
+                        e.setStatus(QuestionStatus.NOTANSWERED);
                     }
-                    return e;
                 })
                 .collect(Collectors.toList());
-        //log.info(tickets.toString());
         return ResponseEntity.ok().body(tickets);
     }
 
     /*** Метод, принимающий ответ на билет */
     @PostMapping("/answer")
     public ResponseEntity<?> answer(@RequestBody Ticket ticket) {
-        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal(); //получаем текущего юзера
+        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        TicketAnswer ticketAnswer = new TicketAnswer(); //создаем модель отвеченного билета
-        ticketAnswer.setRelatedTicket(ticket); //привязываем его к оригинальному билету
-        if (ticket.getQuestions().stream().anyMatch(e -> e.getStatus().equals(QuestionStatus.FALSE))) { //выставляем статус и кол-во ошибок
+        TicketAnswer ticketAnswer = new TicketAnswer();
+        ticketAnswer.setRelatedTicket(ticket);
+        if (ticket.getQuestions().stream().anyMatch(e -> e.getStatus().equals(QuestionStatus.FALSE))) {
             ticketAnswer.setStatus(QuestionStatus.FALSE);
-            ticketAnswer.setErrorCount((int)ticket.getQuestions().stream().filter(e -> e.getStatus().equals(QuestionStatus.FALSE)).count());
+            ticketAnswer.setErrorCount((int) ticket.getQuestions().stream().filter(e -> e.getStatus().equals(QuestionStatus.FALSE)).count());
         } else {
             ticketAnswer.setErrorCount(0);
             ticketAnswer.setStatus(QuestionStatus.TRUE);
         }
-        ticketAnswer.setLastPass(new Date()); //выставялем дату последнего выполнения (текущую)
+        ticketAnswer.setLastPass(new Date());
 
-        //log.info("" + user.getTicketsAnswers().removeIf(e -> e.getRelatedTicket().getId().equals(ticketAnswer.getRelatedTicket().getId())));
-        user.getTicketsAnswers().add(ticketAnswer); //заменяем билет, если он уже был когда-то пройден
-        //log.info(user.getTicketsAnswers().toString());
+        user.getTicketsAnswers().add(ticketAnswer);
 
-        for (Question t : ticket.getQuestions()) { // пробегаемся по отвеченным вопросам
-            QuestionAnswer questionAnswer = new QuestionAnswer(); //создаем модель отвеченного вопроса
-            questionAnswer.setRelatedQuestion(t); //привязываем к оригинальному вопросу
-            questionAnswer.setStatus(t.getStatus()); //выставляем статус TRUE или FALSE
-            questionAnswer.setFavorite(t.getFavorite()); //выставляем маркер избранности
+        for (Question t : ticket.getQuestions()) {
+            QuestionAnswer questionAnswer = new QuestionAnswer();
+            questionAnswer.setRelatedQuestion(t);
+            questionAnswer.setStatus(t.getStatus());
+            questionAnswer.setFavorite(t.getFavorite());
             user.getQuestionsAnswers().removeIf(e -> e.getRelatedQuestion().getId().equals(t.getId()));
-            user.getQuestionsAnswers().add(questionAnswer); //заменяем вопрос, если он уже был когда-то пройден
+            user.getQuestionsAnswers().add(questionAnswer);
         }
 
-        userRepository.save(user); //все обработанное выше сохраняем в бд
-        //log.info(user.getLogin() + " answered " + user.getTicketsAnswers());
+        userRepository.save(user);
         return ResponseEntity.ok().body("");
     }
 
@@ -109,7 +104,7 @@ public class TicketController {
     public ResponseEntity<?> create() {
         Ticket ticket = new Ticket();
         ticket.setStatus(QuestionStatus.NOTANSWERED);
-        Ticket ready = ticketRepository.save(ticket);
+        ticketRepository.save(ticket);
         return ResponseEntity.ok().body("");
     }
 
@@ -117,15 +112,10 @@ public class TicketController {
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Ticket ticket = ticketRepository.getById(id);
-        ticket.getQuestions().stream()
-                .forEach(e -> e.getAnswers().stream()
-                        .forEach(j -> questionAnswerRepository.removeLinks(j.getId())));
-        ticket.getQuestions().stream()
-                .forEach(e -> themeRepository.removeLinks(e.getId()));
-        ticket.getQuestions().stream()
-                .forEach(e -> questionAnswerRepository.removeLinks1(e.getId()));
-        ticket.getQuestions().stream()
-                .forEach(e -> questionAnswerRepository.removeLinks2(e.getId()));
+        ticket.getQuestions().forEach(e -> e.getAnswers().forEach(j -> questionAnswerRepository.removeLinks(j.getId())));
+        ticket.getQuestions().forEach(e -> themeRepository.removeLinks(e.getId()));
+        ticket.getQuestions().forEach(e -> questionAnswerRepository.removeLinks1(e.getId()));
+        ticket.getQuestions().forEach(e -> questionAnswerRepository.removeLinks2(e.getId()));
         ticketAnswerRepository.removeLinks(id);
         ticketRepository.removeLinks(id);
         ticketRepository.deleteById(id);

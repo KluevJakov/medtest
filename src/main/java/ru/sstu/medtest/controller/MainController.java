@@ -7,14 +7,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import ru.sstu.medtest.config.jwt.JwtTokenUtil;
 import ru.sstu.medtest.entity.Stat;
 import ru.sstu.medtest.entity.UserEntity;
 import ru.sstu.medtest.entity.auth.JwtRequest;
 import ru.sstu.medtest.entity.auth.JwtResponse;
-import ru.sstu.medtest.entity.dto.FilterDto;
 import ru.sstu.medtest.entity.dto.TestAnswersDto;
 import ru.sstu.medtest.repository.RoleRepository;
 import ru.sstu.medtest.repository.StatRepository;
@@ -159,47 +157,47 @@ public class MainController {
     @PostMapping("/test")
     public ResponseEntity<?> test(@RequestBody TestAnswersDto testAnswersDto){
         String result = "";
-        Integer score = 0;
+        int score = 0;
 
         TestAnswersDto check = TestAnswersDto.builder()
                 .q1("а").q2("6").q3("9").q4("7").q5("1").q6("б").q7("в").q8("2")
                 .q9("5").q10("3").q11("8").q12("4")
                 .build();
 
-        if (testAnswersDto.getQ1().toLowerCase().equals(check.getQ1().toLowerCase())) {
+        if (testAnswersDto.getQ1().equalsIgnoreCase(check.getQ1())) {
             score += 1;
         }
-        if (testAnswersDto.getQ2().toLowerCase().equals(check.getQ2().toLowerCase())) {
+        if (testAnswersDto.getQ2().equalsIgnoreCase(check.getQ2())) {
             score += 1;
         }
-        if (testAnswersDto.getQ3().toLowerCase().equals(check.getQ3().toLowerCase())) {
+        if (testAnswersDto.getQ3().equalsIgnoreCase(check.getQ3())) {
             score += 1;
         }
-        if (testAnswersDto.getQ4().toLowerCase().equals(check.getQ4().toLowerCase())) {
+        if (testAnswersDto.getQ4().equalsIgnoreCase(check.getQ4())) {
             score += 1;
         }
-        if (testAnswersDto.getQ5().toLowerCase().equals(check.getQ5().toLowerCase())) {
+        if (testAnswersDto.getQ5().equalsIgnoreCase(check.getQ5())) {
             score += 1;
         }
-        if (testAnswersDto.getQ6().toLowerCase().equals(check.getQ6().toLowerCase())) {
+        if (testAnswersDto.getQ6().equalsIgnoreCase(check.getQ6())) {
             score += 1;
         }
-        if (testAnswersDto.getQ7().toLowerCase().equals(check.getQ7().toLowerCase())) {
+        if (testAnswersDto.getQ7().equalsIgnoreCase(check.getQ7())) {
             score += 1;
         }
-        if (testAnswersDto.getQ8().toLowerCase().equals(check.getQ8().toLowerCase())) {
+        if (testAnswersDto.getQ8().equalsIgnoreCase(check.getQ8())) {
             score += 1;
         }
-        if (testAnswersDto.getQ9().toLowerCase().equals(check.getQ9().toLowerCase())) {
+        if (testAnswersDto.getQ9().equalsIgnoreCase(check.getQ9())) {
             score += 1;
         }
-        if (testAnswersDto.getQ10().toLowerCase().equals(check.getQ10().toLowerCase())) {
+        if (testAnswersDto.getQ10().equalsIgnoreCase(check.getQ10())) {
             score += 1;
         }
-        if (testAnswersDto.getQ11().toLowerCase().equals(check.getQ11().toLowerCase())) {
+        if (testAnswersDto.getQ11().equalsIgnoreCase(check.getQ11())) {
             score += 1;
         }
-        if (testAnswersDto.getQ12().toLowerCase().equals(check.getQ12().toLowerCase())) {
+        if (testAnswersDto.getQ12().equalsIgnoreCase(check.getQ12())) {
             score += 1;
         }
 

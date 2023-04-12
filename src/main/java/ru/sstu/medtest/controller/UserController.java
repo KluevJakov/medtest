@@ -9,7 +9,8 @@ import ru.sstu.medtest.entity.dto.UserDto;
 import ru.sstu.medtest.repository.RoleRepository;
 import ru.sstu.medtest.repository.UserRepository;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
