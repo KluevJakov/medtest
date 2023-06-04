@@ -46,8 +46,8 @@ public class UserController {
         String finalRole = role;
         return userRepository.findAll().stream()
                 .filter(e -> !e.getRoles().contains(roleRepository.findBySystemName("ADMIN")))
-                .filter(e -> e.getLogin().contains(finalLogin))
-                .filter(e -> e.getGroupp().contains(finalGroup))
+                .filter(e -> e.getLogin().toLowerCase().contains(finalLogin.toLowerCase()))
+                .filter(e -> e.getGroupp().toLowerCase().contains(finalGroup.toLowerCase()))
                 .filter(e -> e.getRoles().stream().anyMatch(j -> j.getDisplayName().toLowerCase().contains(finalRole.toLowerCase())))
                 .limit(size)
                 .collect(Collectors.toList());

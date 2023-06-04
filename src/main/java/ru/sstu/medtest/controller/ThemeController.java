@@ -8,12 +8,13 @@ import org.springframework.web.bind.annotation.*;
 import ru.sstu.medtest.entity.Question;
 import ru.sstu.medtest.entity.Theme;
 import ru.sstu.medtest.entity.UserEntity;
+import ru.sstu.medtest.entity.dto.ThemeDTO;
 import ru.sstu.medtest.repository.QuestionRepository;
 import ru.sstu.medtest.repository.ThemeRepository;
 import ru.sstu.medtest.repository.UserRepository;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 @RestController
@@ -29,13 +30,32 @@ public class ThemeController {
     private QuestionRepository questionRepository;
 
     /*** Метод формирующий для пользователя список изученных и неизученных тем */
-    @GetMapping("/getAll")
-    public ResponseEntity<?> getAll() {
+    @GetMapping("/getAllW")
+    public ResponseEntity<?> getAllW() {
         UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        List<Theme> themes = themeRepository.findAll().stream()
+
+        Collection<ThemeDTO> themes = themeRepository.findAllWithoutQuestions().stream()
                 .peek(e -> e.setLearned(user.getThemes().stream().anyMatch(x -> x.getId().equals(e.getId()))))
                 .collect(Collectors.toList());
         return ResponseEntity.ok().body(themes);
+    }
+
+    @GetMapping("/getAll")
+    public ResponseEntity<?> getAll() {
+        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Collection<Theme> themes = themeRepository.findAll().stream()
+                .peek(e -> e.setLearned(user.getThemes().stream().anyMatch(x -> x.getId().equals(e.getId()))))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok().body(themes);
+    }
+
+    @GetMapping()
+    public ResponseEntity<?> get(@RequestParam Long id) {
+        UserEntity user = (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Theme theme = themeRepository.findByIdD(id).get();
+        return ResponseEntity.ok().body(theme);
     }
 
     /*** Метод помечающий для пользователя тему как изученную */

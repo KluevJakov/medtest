@@ -8,11 +8,12 @@ import lombok.ToString;
 import javax.persistence.*;
 import java.util.List;
 
-@Entity
+@Entity(name = "theme")
 @Getter
 @Setter
 @ToString
 @EqualsAndHashCode
+@Table(name = "theme")
 public class Theme {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

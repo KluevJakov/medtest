@@ -96,6 +96,7 @@ public class QuestionController {
         List<Question> questions = questionRepository.findAll()
                 .stream()
                 .peek(e -> e.setFavorite(favsId.contains(e.getId())))
+                .limit(20)
                 .collect(Collectors.toList());
 
         //log.info("try to fetch marathon " + questions);
