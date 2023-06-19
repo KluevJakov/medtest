@@ -16,7 +16,9 @@ import java.util.Set;
 @EqualsAndHashCode
 public class Ticket {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @SequenceGenerator(name = "ticker_seq", sequenceName = "ticker_squence", initialValue = 50, allocationSize = 20)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "ticker_seq")
+    @Column(name = "id", nullable = false)
     private Long id;
     private Date lastPass;
     private Integer errorCount;
