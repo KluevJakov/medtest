@@ -18,10 +18,7 @@ import ru.sstu.medtest.repository.RoleRepository;
 import ru.sstu.medtest.repository.StatRepository;
 import ru.sstu.medtest.repository.UserRepository;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -120,7 +117,8 @@ public class MainController {
     public ResponseEntity<?> stat(@RequestParam(required = false) String login,
                                   @RequestParam(required = false) String group,
                                   @RequestParam(required = false) String date,
-                                  @RequestParam(required = false) Integer size) {
+                                  @RequestParam(required = false) Integer size,
+                                  @RequestParam(required = false) Integer error) {
         String finalDate;
         if (size == null) {
             size = 20;
@@ -142,15 +140,21 @@ public class MainController {
 
         String finalLogin = login;
         String finalGroup = group;
-
         String finalDate1 = finalDate;
-        return ResponseEntity.ok().body(statRepository.findAll().stream()
+
+        List<Stat> stats = statRepository.findAll().stream()
                 .filter(e -> e.getName().contains(finalLogin))
                 .filter(e -> e.getGroupp().contains(finalGroup))
                 .filter(e -> e.getPassDate().toString().substring(0, 10).equals(finalDate1))
                 .sorted(Comparator.comparing(Stat::getPassDate).reversed())
                 .limit(size)
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList());
+
+        if (error != null) {
+            stats = stats.stream().filter(e -> e.getErrorCount().equals(error)).collect(Collectors.toList());
+        }
+
+        return ResponseEntity.ok().body(stats);
     }
 
 
